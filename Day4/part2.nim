@@ -1,8 +1,8 @@
 import sequtils
 import strutils
+import tables
 
-type Field = tuple[key: string, value: string]
-type Passport = seq[Field]
+type Passport = Table[string, string]
 
 var passports: seq[Passport]
 
@@ -18,23 +18,94 @@ while file.readLine(line):
     var keyValPairs = line.split(' ')
     for pair in keyValPairs:
         var items = pair.split(':')
-        var tup: Field
-        tup.key = items[0]
-        tup.value = items[1]
-        passport.add(tup)
+        passport[items[0]] = items[1]
 close(file)
 passports.add(passport)
 
-proc ContainsOnlyOne(passport: Passport, searchKey: string): bool =
-    var count = countIt(passport, it.key == searchKey)
-    if count == 0:
-        echo "Invalid passport: missing field ", searchKey
+proc ValidateBirthYear(passport: Passport): bool =
+    if passport.contains("byr"):
+        var byr = parseInt(passport["byr"])
+        if byr >= 1920 and byr <= 2002:
+            return true
+        else:
+            return false
+    else:
         return false
-    if count == 1:
-        return true
-    if count > 1:
-        echo "Passport has multiple entries for same field"
+
+proc ValidateIssueYear(passport: Passport): bool =
+    if passport.contains("iyr"):
+        var iyr = parseInt(passport["iyr"])
+        if iyr >= 2010 and iyr <= 2020:
+            return true
+        else:
+            return false
+    else:
         return false
+
+proc ValidateExpYear(passport: Passport): bool =
+    if passport.contains("eyr"):
+        var eyr = parseInt(passport["eyr"])
+        if eyr >= 2020 and eyr <= 2030:
+            return true
+        else:
+            return false
+    else:
+        return false
+
+proc ValidateHeight(passport: Passport): bool =
+    if passport.contains("hgt"):
+        var hgtString = passport["hgt"]
+        var unit = hgtString.substr(len(hgtString) - 2)
+        var hgt = parseInt(hgtString.substr(0, len(hgtString) - 2))
+        case unit
+        of "in":
+            if hgt >= 59 and hgt <= 76:
+                return true
+            else:
+                return false
+        of "cm":
+            if hgt >= 150 and hgt <= 193:
+                return true
+            else:
+                return false
+        else:
+            echo "Unhanlded case"
+            quit()
+    else:
+        return false
+
+proc ValidateHairColor(passport: Passport): bool =
+    if passport.contains("hcl"):
+        var hcl = passport["hcl"]
+        
+
+        if byr >= 1920 and byr <= 2002:
+            return true
+        else:
+            return false
+    else:
+        return false
+
+proc ValidateEyeColor(passport: Passport): bool =
+    if passport.contains("byr"):
+        var byr = parseInt(passport["byr"])
+        if byr >= 1920 and byr <= 2002:
+            return true
+        else:
+            return false
+    else:
+        return false
+
+proc ValidatePassportId(passport: Passport): bool =
+    if passport.contains("byr"):
+        var byr = parseInt(passport["byr"])
+        if byr >= 1920 and byr <= 2002:
+            return true
+        else:
+            return false
+    else:
+        return false
+
 
 var numValidPassports = 0
 
