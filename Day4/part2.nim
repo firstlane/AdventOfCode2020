@@ -1,4 +1,4 @@
-import sequtils
+import re
 import strutils
 import tables
 
@@ -56,30 +56,33 @@ proc ValidateHeight(passport: Passport): bool =
     if passport.contains("hgt"):
         var hgtString = passport["hgt"]
         var unit = hgtString.substr(len(hgtString) - 2)
-        var hgt = parseInt(hgtString.substr(0, len(hgtString) - 2))
         case unit
         of "in":
+            var hgt = parseInt(hgtString.substr(0, len(hgtString) - 3))
             if hgt >= 59 and hgt <= 76:
                 return true
             else:
                 return false
         of "cm":
+            var hgt = parseInt(hgtString.substr(0, len(hgtString) - 3))
             if hgt >= 150 and hgt <= 193:
                 return true
             else:
                 return false
         else:
-            echo "Unhanlded case"
-            quit()
+            # Handle case where data from input has no unit
+            var hgt = parseInt(hgtString)
+            if (hgt >= 59 and hgt <= 76) or (hgt >= 150 and hgt <= 193):
+                return true
+            else:
+                return false
     else:
         return false
 
 proc ValidateHairColor(passport: Passport): bool =
     if passport.contains("hcl"):
         var hcl = passport["hcl"]
-        
-
-        if byr >= 1920 and byr <= 2002:
+        if hcl.find(re"^#[A-Za-z0-9]{6}$", 0) >= 0:
             return true
         else:
             return false
@@ -87,9 +90,9 @@ proc ValidateHairColor(passport: Passport): bool =
         return false
 
 proc ValidateEyeColor(passport: Passport): bool =
-    if passport.contains("byr"):
-        var byr = parseInt(passport["byr"])
-        if byr >= 1920 and byr <= 2002:
+    if passport.contains("ecl"):
+        var ecl = passport["ecl"]
+        if ecl.find(re"^(amb|blu|brn|gry|grn|hzl|oth)$", 0) >= 0:
             return true
         else:
             return false
@@ -97,9 +100,9 @@ proc ValidateEyeColor(passport: Passport): bool =
         return false
 
 proc ValidatePassportId(passport: Passport): bool =
-    if passport.contains("byr"):
-        var byr = parseInt(passport["byr"])
-        if byr >= 1920 and byr <= 2002:
+    if passport.contains("pid"):
+        var pid = passport["pid"]
+        if pid.find(re"^[0-9]{9}$", 0) >= 0:
             return true
         else:
             return false
@@ -110,7 +113,7 @@ proc ValidatePassportId(passport: Passport): bool =
 var numValidPassports = 0
 
 for pass in passports:
-    if ContainsOnlyOne(pass, "byr") and ContainsOnlyOne(pass, "iyr") and ContainsOnlyOne(pass, "eyr") and ContainsOnlyOne(pass, "hgt") and ContainsOnlyOne(pass, "hcl") and ContainsOnlyOne(pass, "ecl") and ContainsOnlyOne(pass, "pid"):
+    if ValidateBirthYear(pass) and ValidateExpYear(pass) and ValidateEyeColor(pass) and ValidateHairColor(pass) and ValidateHeight(pass) and ValidateIssueYear(pass) and ValidatePassportId(pass):
         numValidPassports += 1
 
 echo numValidPassports
