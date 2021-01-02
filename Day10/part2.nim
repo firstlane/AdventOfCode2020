@@ -7,7 +7,7 @@ import tables
 
 var adapters: seq[int]
 
-let file = open("test.txt", FileMode.fmRead)
+let file = open("input.txt", FileMode.fmRead)
 var line: string
 while file.readLine(line):
     adapters.add(parseInt(line))
@@ -23,8 +23,6 @@ adapters.add(builtIn)
 An adapter can only connect to a source
 1-3 jolts lower than its rating.
 ]#
-
-echo adapters
 
 #[
 With the adapters sorted, we can count every 
@@ -63,22 +61,30 @@ Instead, I'm falling back on the solution this guy used
 (linked below).
 ]#
 
-# https://dev.to/sleeplessbyte/comment/192lf
+#[
+Look at the solution from Derk-Jan Karrenbeld
+https://dev.to/rpalo/advent-of-code-2020-solution-megathread-day-10-adapter-array-33ea
+]#
+
+#[
+Actually, I didn't end up using that solution, either. 
+After getting home from Christmas vacation, I forgot 
+where I was on this and decided to look at solutions on 
+Reddit. I followed this guy's idea: 
+https://www.reddit.com/r/adventofcode/comments/ka8z8x/2020_day_10_solutions/ghb5rpa?utm_source=share&utm_medium=web2x&context=3
+]#
 
 var source = 0
-var combinations = 0
+var joltPathCount: CountTable[int]
+joltPathCount.inc(source)   # Only one way to get to adapter with 0 jolts
+
 for adapter in adapters:
-    var difference = adapter - source
-    case difference
-    of 1:
-        combinations = combinations 
-    of 2:
-        discard
-    of 3:
-        discard
-    else:
-        echo fmt("Difference greater than 3: {source} -> {adapter}")
-        quit(1)
+    var count3 = joltPathCount.getOrDefault(adapter - 3, 0)
+    var count2 = joltPathCount.getOrDefault(adapter - 2, 0)
+    var count1 = joltPathCount.getOrDefault(adapter - 1, 0)
+
+    joltPathCount.inc(adapter, count1 + count2 + count3)
 
     source = adapter
 
+echo joltPathCount.getOrDefault(adapters[^1], -1)
