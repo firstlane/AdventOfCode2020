@@ -1,65 +1,84 @@
-import re
+import algorithm
 import intsets
 import sequtils
+import strformat
 import strutils
 import tables
 
-var numbers: seq[int]
+var adapters: seq[int]
 
-let file = open("input.txt", FileMode.fmRead)
+let file = open("test.txt", FileMode.fmRead)
 var line: string
 while file.readLine(line):
-    numbers.add(parseInt(line))
+    adapters.add(parseInt(line))
 close(file)
 
+adapters.sort()
+let highestRated = adapters[^1]
+let builtIn = highestRated + 3
+
+adapters.add(builtIn)
+
 #[
-Find the first number in the list which
-is not the sum of two of the previous 25
-numbers in the list.
-Note: the two summed numbers must not be equal.
+An adapter can only connect to a source
+1-3 jolts lower than its rating.
 ]#
 
-# Preamble length is 25. Must include a number
-# after the preamble.
-var preambleLength = 25
-if len(numbers) < preambleLength + 1:
-    echo "Not enough numbers to form a preamble"
-    quit(1)
+echo adapters
 
-var result = -1
-var resultIndex = -1
+#[
+With the adapters sorted, we can count every 
+arrangement where one number that has a difference
+less than 3 from the previous adapter is removed.
+Ex: Say we have 0, 1, 4, 5, 6, 9.
+- 1 cannot be remove in any valid configuration 
+since 4 cannot connect to 0.
+- 4 cannot be removed since 5 cannot connect to 1.
+- 5 can be removed since 6 can connect to 4. 
+So we count the configuration 0, 1, 4, 6, 9.
+- 6 cannot be removed.
+- 9 cannot be removed.
+So this example would have two valid configurations.
+]#
 
-for i in countup(preambleLength, len(numbers) - 1, 1):
-    var num = numbers[i]
-    var preamble1 = numbers[(i - preambleLength)..(i - 1)].toIntSet()
-    var preamble2 = numbers[(i - preambleLength)..(i - 1)].toIntSet()
+#[
+Find all the numbers that cannot be removed.
+Then, look at the differences between each set of 
+adjacent non-removable numbers. If the difference 
+is >= 3, count 2^n for n = number of adapters between 
+the adjacent numbers.
+If the difference is > 3, uhhh...do some combinatorics
+stuff.
 
-    var sumFound = false
-    for j in preamble1:
-        for k in preamble2:
-            if j + k == num:
-                sumFound = true
+I couldn't work out this solution in full. Things got 
+hairy when you have a sequence like 
+7, 10, 11, 12, 13, 15, 16, 19 
+where 7, 10, 16, and 19 cannot be removed from the 
+sequence. 11-15 can, but how do you count the possible 
+combinations? You could just choose 13 and satisfy the 
+requirements. Every other combination requires at least 
+two of the numbers to be present to satisfy requirements.
 
-    if not sumFound:
-        result = num
-        resultIndex = i
-        break
+Instead, I'm falling back on the solution this guy used 
+(linked below).
+]#
 
-if resultIndex != -1:
-    for i in countup(0, len(numbers) - 1, 1):
-        for j in countup(i + 1, len(numbers) - i - 2, 1):
-            var sum = numbers[i..j].foldl(a + b)
-            if sum > result:
-                break
-            elif sum == result:
-                var min = numbers[i..j].min()
-                var max = numbers[i..j].max()
-                echo "Encryption weakness: ", min, ", ", max
-                echo "Sum: ", min + max
-                quit(0)
+# https://dev.to/sleeplessbyte/comment/192lf
 
-    echo "Failed to find an encryption weakness"
-    quit(1)
-else:
-    echo "Failed to find an invalid number"
-    quit(1)
+var source = 0
+var combinations = 0
+for adapter in adapters:
+    var difference = adapter - source
+    case difference
+    of 1:
+        combinations = combinations 
+    of 2:
+        discard
+    of 3:
+        discard
+    else:
+        echo fmt("Difference greater than 3: {source} -> {adapter}")
+        quit(1)
+
+    source = adapter
+
